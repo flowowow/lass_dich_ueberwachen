@@ -2,7 +2,3 @@
 def zwanzig_doener():
     for i in range(20):
         print("Döner")
-def vierzig_doener():
-    for i in range(2):
-        zwanzig_doener()
-vierzig_doener()

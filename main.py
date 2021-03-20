@@ -37,7 +37,7 @@ class Test():
         sub = fig.add_subplot(111)
         sub.plot([1], y, color="blue")
         plt.title('CPU Frequency')
-        plt.xlabel('frequency in Mhz')
+        plt.ylabel('frequency in Mhz')
         plt.xlabel('time in s')
 
         # Schleife
@@ -63,8 +63,8 @@ class Test():
         sub = fig.add_subplot(111)
         sub.bar(x, y, align="center", color="blue")
         plt.title('CPU Workload')
-        plt.xlabel('workload in %')
-        plt.xlabel('time in s')
+        plt.xlabel('cores')
+        plt.ylabel('workload in %')
 
         # Schleife
         while True:
@@ -73,3 +73,4 @@ class Test():
             sub.bar(x, y, align="center", color="blue")
             fig.canvas.draw()
             fig.canvas.flush_events()
+            

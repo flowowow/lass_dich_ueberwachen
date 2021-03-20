@@ -34,8 +34,8 @@ class Test():
         # Graph vorzeichnen und betiteln
         plt.ion()
         fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.plot([1], y, color="blue")
+        sub = fig.add_subplot(111)
+        sub.plot([1], y, color="blue")
         plt.title('CPU Workload')
         plt.xlabel('workload in %')
         plt.xlabel('time in s')
@@ -44,7 +44,7 @@ class Test():
         while True:
             y.append(psu.cpu_percent())
             x.append(round(time.time() - start_time, 2))
-            ax.plot(x, y, color="blue")
+            sub.plot(x, y, color="blue")
             fig.canvas.draw()
             fig.canvas.flush_events()
 

@@ -5,6 +5,7 @@
 import psutil as psu
 import matplotlib.pyplot as plt
 import time
+import math
 
 # Probier Klasse --> kann gelöscht werden, wenn wir das nicht brauchen
 class Test():
@@ -15,7 +16,7 @@ class Test():
     def get_processes(self) -> dict:
         running_processes = {}
         stopped_processes = {}
-        
+
         for process in psu.process_iter():
             if process.status() == "running":
                 running_processes[process.name()] = process.pid
@@ -73,4 +74,27 @@ class Test():
             sub.bar(x, y, align="center", color="blue")
             fig.canvas.draw()
             fig.canvas.flush_events()
-            
+    
+    # Identisch zu cpu_freq(), bloß mit Prozentzahl und separatem Graphen für jeden Thread
+    def cpu_perc_all_cores(self):
+        start_time = time.time()
+        x = [0]
+        y = [[0]]
+        subs = []
+
+        plt.ion()
+        fig = plt.figure()
+        plt.title('CPU Workload')
+
+        for i in range(psu.cpu_count()):
+            y.append([0])
+            subs.append(fig.add_subplot(math.ceil(psu.cpu_count() / 4), 4, i + 1))
+            subs[i].plot(x, y[i], color="blue")
+
+        while True:
+            x.append(round(time.time() - start_time, 2))
+            for c, i in enumerate(psu.cpu_percent(percpu=True)):
+                y[c].append(i)
+                subs[c].plot(x, y[c], color="blue")
+            fig.canvas.draw()
+            fig.canvas.flush_events()

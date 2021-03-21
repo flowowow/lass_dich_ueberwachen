@@ -1,5 +1,6 @@
 # Bitte alles mit Kommentaren versehen, damit jeder weiß was im Code passiert
 
+#Aaron ist auch am start
 
 # Imports
 import psutil as psu

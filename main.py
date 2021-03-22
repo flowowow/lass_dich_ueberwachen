@@ -1,10 +1,10 @@
 # Bitte alles mit Kommentaren versehen, damit jeder weiß was im Code passiert
 
-#Aaron ist auch am start
 
 # Imports
 import psutil as psu
 import matplotlib.pyplot as plt
+import pandas as pd
 import time
 import math
 

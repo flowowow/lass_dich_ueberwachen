@@ -1,0 +1,32 @@
+<ListItem>:
+    IconLeftWidget:
+        icon: root.icon
+        on_press: app.select_item(self)
+
+Screen:
+
+    MDBoxLayout:
+        orientation: "vertical"
+
+        MDToolbar:
+            title: "Processes"
+            elevation: 10
+
+            MDSpinner:
+                active: False
+                size_hint: None, None
+                size: dp(35), dp(35)
+                pos_hint: {'center_x': 0, 'center_y': .5}
+                color: 1,1,1,1
+
+        ScrollView:
+            MDList:
+                id: processes
+
+    MDFloatingActionButton:
+        icon: "play"
+        md_bg_color: app.theme_cls.primary_color
+        elevation: 10
+        on_press: app.activate_spinner(self)
+        # Das ist hässlig, bitte ändern
+        pos_hint: {"center_x": .9, "center_y": .1}

@@ -1,7 +1,7 @@
 <ListItem>:
     IconLeftWidget:
         icon: root.icon
-        on_press: app.select_item(self)
+        on_press: app.select_item(self) 
 
 Screen:
 
@@ -19,14 +19,39 @@ Screen:
                 pos_hint: {'center_x': 0, 'center_y': .5}
                 color: 1,1,1,1
 
-        ScrollView:
-            MDList:
-                id: processes
+        MDBottomNavigation:
+            text_color_normal: 1, 1, 1, 1
+            text_color_active: 1, 0, 1, 1
 
-    MDFloatingActionButton:
-        icon: "play"
-        md_bg_color: app.theme_cls.primary_color
-        elevation: 10
-        on_press: app.activate_spinner(self)
-        # Das ist hässlig, bitte ändern
-        pos_hint: {"center_x": .9, "center_y": .1}
+            MDBottomNavigationItem:
+                name: "selection"
+                text: "Selection"
+                icon: "checkbox-multiple-marked-outline"
+
+                ScrollView:
+                    do_scroll_x: False
+                    scroll_type: ["bars"]
+                    bar_width: 10
+                    bar_color: .7,.7,.7,1
+                    bar_inactive_color: .7,.7,.7,5
+
+                    MDList:
+                        id: processes
+
+                MDFloatingActionButton:
+                    icon: "play"
+                    md_bg_color: app.theme_cls.primary_color
+                    elevation: 10
+                    on_press: app.activate_spinner(self)
+                    # Das ist hässlig, bitte ändern
+                    pos_hint: {"center_x": .9, "center_y": .1}
+
+            MDBottomNavigationItem:
+                name: "stats"
+                text: "Stats"
+                icon: "chart-line"
+
+                MDLabel:
+                    text: "Stats here"
+                    halign: "center"
+                    walign: "center"

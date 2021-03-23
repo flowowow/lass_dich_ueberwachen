@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time
 import math
-# Kivy imports
+# "pip install kivy" und "pip install kivymd" zum Importieren
 from kivy.lang import Builder
 from kivy.properties import StringProperty
 from kivymd.app import MDApp
@@ -98,21 +98,26 @@ class Test():
             fig.canvas.draw()
             fig.canvas.flush_events()
 
-
+# App Klasse
 class Application(MDApp):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.kv = Builder.load_file("KV.kv")
         self.running_processes, self.stopped_processes = self.get_processes()
-        self.snack = Snackbar(text="Select Applications to track")
+        self.snack1 = Snackbar(text="Select applications to track")
     
     def build(self):
         return self.kv
 
     def on_start(self):
         self.create_list()
+        for c, i in enumerate(self.root.walk()):
+            if c == 7:
+                self.spinner = i
+                break
     
+    # Für jeden laufenden Process wird ein Listenobjekt erstellt
     def create_list(self) -> None:
         for c, i in enumerate(self.running_processes):
             processes_objs_list.append(ListItem(text=i))
@@ -136,6 +141,7 @@ class Application(MDApp):
 
     # Der For-Loop hier funktioniert, ist aber ziemlich ineffizient --> bessere Lösung?
     # Auch das try-except ist echt hässlig. Wär geil wenn das noch schöner wird
+    # Wird aufgerufen wenn ein Listenobjekt gedrückt wird
     def select_item(self, instance) -> None:
         try:
             for i in processes_objs_list:
@@ -156,6 +162,7 @@ class Application(MDApp):
                         i.icon = "checkbox-blank-outline"
                         processes_names_list[i.text] = False
 
+    # Wird ausgeführt wenn der Start Knopf gedrückt wird
     def activate_spinner(self, instance):
         boolean = True
 
@@ -166,7 +173,7 @@ class Application(MDApp):
         else:
             boolean = False
             try:
-                self.snack.show()
+                self.snack1.show()
             except WidgetException:
                 pass
         
@@ -177,15 +184,12 @@ class Application(MDApp):
             else:
                 instance.md_bg_color = self.theme_cls.primary_color
                 instance.icon = "play"
+            if not self.spinner.active:
+                self.spinner.active = True
+            elif self.spinner.active:
+                self.spinner.active = False
 
-            for c, i in enumerate(self.root.walk()):
-                if c == 7:
-                    if not i.active:
-                        i.active = True
-                    elif i.active:
-                        i.active = False
-
-
+# Custom Listen Klasse
 class ListItem(OneLineIconListItem):
     icon = StringProperty("checkbox-blank-outline")
 

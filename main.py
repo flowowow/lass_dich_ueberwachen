@@ -9,16 +9,11 @@ import time
 import math
 # "pip install kivy" und "pip install kivymd" zum Importieren
 from kivy.lang import Builder
-from kivy.properties import StringProperty
 from kivymd.app import MDApp
-from kivymd.uix.list import OneLineIconListItem
 from kivymd.uix.snackbar import Snackbar
+from kivymd.uix.menu import MDDropdownMenu
 from kivy.uix.widget import WidgetException
 
-
-# Übergreifende Variablen
-processes_objs_list = []
-processes_names_list = {}
 
 
 # Probier Klasse --> kann gelöscht werden, wenn wir das nicht brauchen
@@ -98,6 +93,17 @@ class Test():
             fig.canvas.draw()
             fig.canvas.flush_events()
 
+
+# Wie eine .kv Datei, bloß als string
+LIST_ITEM = """
+OneLineIconListItem:
+    on_press: app.select_item(self, "OneLineIconListItem")
+
+    IconLeftWidget:
+        icon: "checkbox-blank-outline"
+        on_press: app.select_item(self, "IconLeftWidget")
+"""
+
 # App Klasse
 class Application(MDApp):
 
@@ -105,24 +111,30 @@ class Application(MDApp):
         super().__init__(**kwargs)
         self.kv = Builder.load_file("KV.kv")
         self.running_processes, self.stopped_processes = self.get_processes()
+        self.tracking = False
         self.snack1 = Snackbar(text="Select applications to track")
+        self.snack2 = Snackbar(text="Turn off tracking to select/deselect applications")
+        self.processes_objs_list = []
+        self.processes_names_dict = {}
     
     def build(self):
+        # Icons werden nicht angezeigt
+        menu_items = [{"icon": "filter-outline", "text": "Filtered"}, {"icon": "format-list-bulleted", "text": "Everything"}]
+        # Position des Symbols in Toolbar wird nicht aktualisiert, wenn die Fenstergröße verstellt wird --> fix
+        self.filter_menu = MDDropdownMenu(items=menu_items, width_mult=3.5, caller=self.kv.ids.toolbar.children[0], callback=self.filter_menu_close)
         return self.kv
 
     def on_start(self):
         self.create_list()
-        for c, i in enumerate(self.root.walk()):
-            if c == 7:
-                self.spinner = i
-                break
     
     # Für jeden laufenden Process wird ein Listenobjekt erstellt
     def create_list(self) -> None:
         for c, i in enumerate(self.running_processes):
-            processes_objs_list.append(ListItem(text=i))
-            processes_names_list[processes_objs_list[c].text] = False
-            self.root.ids.processes.add_widget(processes_objs_list[c])
+            item = Builder.load_string(LIST_ITEM)
+            item.text = i
+            self.processes_objs_list.append(item)
+            self.processes_names_dict[i] = False
+            self.root.ids.processes.add_widget(self.processes_objs_list[c])
 
     # Gibt zwei Dictionaries zurück, die alle zur Zeit laufenden und gestoppten Prozesse beinhalten
     # key --> name
@@ -140,34 +152,39 @@ class Application(MDApp):
         return running_processes, stopped_processes
 
     # Der For-Loop hier funktioniert, ist aber ziemlich ineffizient --> bessere Lösung?
-    # Auch das try-except ist echt hässlig. Wär geil wenn das noch schöner wird
     # Wird aufgerufen wenn ein Listenobjekt gedrückt wird
-    def select_item(self, instance) -> None:
-        try:
-            for i in processes_objs_list:
-                if i.text == instance.text:
-                    if i.icon == "checkbox-blank-outline":
-                        i.icon = "checkbox-marked-outline"
-                        processes_names_list[i.text] = True
-                    elif i.icon == "checkbox-marked-outline":
-                        i.icon = "checkbox-blank-outline"
-                        processes_names_list[i.text] = False
-        except AttributeError:
-            for i in processes_objs_list:
-                if i.text == instance.parent.parent.text:
-                    if i.icon == "checkbox-blank-outline":
-                        i.icon = "checkbox-marked-outline"
-                        processes_names_list[i.text] = True
-                    elif i.icon == "checkbox-marked-outline":
-                        i.icon = "checkbox-blank-outline"
-                        processes_names_list[i.text] = False
+    def select_item(self, instance, position) -> None:
+        if not self.tracking:
+            if position == "IconLeftWidget":
+                for i in self.processes_objs_list:
+                    if i.text == instance.parent.parent.text:
+                        if instance.icon == "checkbox-blank-outline":
+                            instance.icon = "checkbox-marked-outline"
+                            self.processes_names_dict[i.text] = True
+                        elif instance.icon == "checkbox-marked-outline":
+                            instance.icon = "checkbox-blank-outline"
+                            self.processes_names_dict[i.text] = False
+            elif position == "OneLineIconListItem":
+                for i in self.processes_objs_list:
+                    if i.text == instance.text:
+                        if instance.children[0].children[0].icon == "checkbox-blank-outline":
+                            instance.children[0].children[0].icon = "checkbox-marked-outline"
+                            self.processes_names_dict[i.text] = True
+                        elif instance.children[0].children[0].icon == "checkbox-marked-outline":
+                            instance.children[0].children[0].icon = "checkbox-blank-outline"
+                            self.processes_names_dict[i.text] = False
+        else:
+            try:
+                self.snack2.show()
+            except WidgetException:
+                pass
 
     # Wird ausgeführt wenn der Start Knopf gedrückt wird
-    def activate_spinner(self, instance):
+    def activate_tracking(self, instance):
         boolean = True
 
-        for i in processes_names_list:
-            if processes_names_list[i]:
+        for i in self.processes_names_dict:
+            if self.processes_names_dict[i]:
                 boolean = True
                 break
         else:
@@ -179,23 +196,17 @@ class Application(MDApp):
         
         if boolean:
             if instance.md_bg_color == self.theme_cls.primary_color:
+                self.tracking = True
                 instance.icon = "stop"
                 instance.md_bg_color = (.79, .22, .29, 1)
             else:
-                instance.md_bg_color = self.theme_cls.primary_color
+                self.tracking = False
                 instance.icon = "play"
-            if not self.spinner.active:
-                self.spinner.active = True
-            elif self.spinner.active:
-                self.spinner.active = False
+                instance.md_bg_color = self.theme_cls.primary_color
 
-# Custom Listen Klasse
-class ListItem(OneLineIconListItem):
-    icon = StringProperty("checkbox-blank-outline")
-
-    def on_press(self):
-        super().on_press()
-        Application.select_item(Application, self)
+    def filter_menu_close(self, instance):
+        print(instance.text)
+        self.filter_menu.dismiss()
 
 
 Application().run()

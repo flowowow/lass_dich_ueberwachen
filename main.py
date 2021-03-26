@@ -4,7 +4,8 @@
 # Imports
 import psutil as psu
 import matplotlib.pyplot as plt
-import pandas as pd
+# import numpy as np
+# import pandas as pd
 import time
 import math
 # "pip install kivy" und "pip install kivymd" zum Importieren
@@ -97,6 +98,7 @@ class Test():
             fig.canvas.flush_events()
 
 
+# MDSwitch wäre hier auf jeden Fall passender --> könnte man mit custom Klasse implementieren
 # Wie eine .kv Datei, bloß als string
 # https://kivy.org/doc/stable/guide/lang.html für mehr Info
 # https://kivy.org/doc/stable/api-kivy.lang.builder.html?highlight=builder# für mehr Info zum Builder
@@ -109,6 +111,7 @@ OneLineIconListItem:
         on_press: app.select_item(self, "IconLeftWidget")
 """
 
+
 # App Klasse
 class Application(MDApp):
 
@@ -117,6 +120,7 @@ class Application(MDApp):
         # Läd .kv Datei
         # https://kivy.org/doc/stable/api-kivy.lang.builder.html?highlight=builder# für mehr Info
         self.kv = Builder.load_file("KV.kv")
+        self.filtered = True
         self.running_processes, self.stopped_processes = self.get_processes()
         self.tracking = False
         # Snackbar Objekt
@@ -129,7 +133,18 @@ class Application(MDApp):
     # build() wird nach __init__() zum Programmstart ausgeführt
     def build(self):
         # Icons werden nicht angezeigt
-        menu_items = [{"icon": "filter-outline", "text": "Filtered"}, {"icon": "format-list-bulleted", "text": "Everything"}]
+        # Das Popup Menu ist hässlig formatiert, ich kriegs aber einfach nicht besser hin :(
+        menu_items = [
+            {
+                "viewclass": "OneLineListItem",
+                "icon": "filter-outline",
+                "text": "Filtered"
+            }, 
+            {
+                "viewclass": "OneLineListItem",
+                "icon": "format-list-bulleted",
+                "text": "Everything"
+            }]
         # Position des Symbols in Toolbar wird nicht aktualisiert, wenn die Fenstergröße verstellt wird --> fix
         # Dropdown Menü Objekt
         # https://kivymd.readthedocs.io/en/0.104.0/components/dropdown-item/index.html für mehr Info
@@ -142,6 +157,7 @@ class Application(MDApp):
     
     # Für jeden laufenden Process wird ein Listenobjekt erstellt
     def create_list(self) -> None:
+        self.processes_objs_list = []
         for c, i in enumerate(self.running_processes):
             # Läd String im .kv Format
             item = Builder.load_string(LIST_ITEM)
@@ -157,15 +173,29 @@ class Application(MDApp):
     def get_processes(self) -> dict:
         running_processes = {}
         stopped_processes = {}
+        # Geht hier bitte nochmal drüber. Ich hab lediglich geschätzt was Windows sein könnte und was nicht
+        # Liste an Prozessen die rausgefiltert werden
+        windows_processes = ["System Idle Process", "System", "RuntimeBroker.exe", "Registry", "svchost.exe", "smss.exe", "lsass.exe",
+                            "services.exe", "csrss.exe", "fontdrvhost.exe", "wininit.exe", "AppVShNotify.exe", "MemCompression", "powershell.exe",
+                            "UserOOBEBroker.exe", "spoolsv.exe", "RtkAudUService64.exe", "MoUsoCoreWorker.exe", "nvcontainer.exe", "SafeConnect.ServiceHost.exe",
+                            "MsMpEng.exe", "SgrmBroker.exe", "dasHost.exe", "sihost.exe", "NisSrv.exe", "CompPkgSrv.exe", "GoogleCrashHandler.exe", 
+                            "GoogleCrashHandler64.exe", "vgtray.exe", "taskhostw.exe", "YourPhoneServer.exe", "dllhost.exe", "conhost.exe", "SearchIndexer.exe", "dwm.exe",
+                            "McCSPServiceHost.exe", "SecurityHealthService.exe", "SettingSyncHost.exe", "ctfmon.exe", "StartMenuExperienceHost.exe",
+                            "nvsphelper64.exe", "SearchProtocolHost.exe", "SearchFilterHost.exe", "winlogon.exe", "audiodg.exe", "SecurityHealthSystray.exe",
+                            "SystemSettingsBroker.exe", "ApplicationFrameHost.exe", "TextInputHost.exe", "WmiPrvSE.exe"]
 
         # Iteriert durch alle laufenden Prozesse
+        # Wenn self.filter == True --> werden nur die Prozesse angezeigt, die nicht in windows_processes sind
+        # self.filter wird in __init__() deklariert und in filter_menu_close() verändert
         for process in psu.process_iter():
-            if process.status() == "running":
-                # unnötige .exe Endung wird vom Anwendungsnamen entfernen
-                name = process.name().split(".exe")[0]
-                running_processes[name] = process.pid
-            elif process.status() == "stopped":
-                stopped_processes[process.name()] = process.pid
+            if not self.filtered or not process.name() in windows_processes:
+                if process.status() == "running":
+                    # unnötige .exe Endung wird vom Anwendungsnamen entfernen
+                    name = process.name().split(".exe")[0]
+                    running_processes[name] = process.pid
+                elif process.status() == "stopped":
+                    name = process.name().split(".exe")[0]
+                    stopped_processes[name] = process.pid
 
         return running_processes, stopped_processes
 
@@ -244,13 +274,26 @@ class Application(MDApp):
                 # Farbe des Knopfes ändern (standard Farbe)
                 instance.md_bg_color = self.theme_cls.primary_color # --> Blau
 
-    # Schließt Dropdown Menü
-    # Hier muss später die Variable noch direkt an eine Aktualisierungsfunktion der Liste weitergegeben werden
+    # Läd die Liste an Prozessen neu
+    def refresh_processes_list(self):
+        self.root.ids.processes.clear_widgets()
+        self.running_processes, self.stopped_processes = self.get_processes()
+        self.create_list()
+
+
+    # Schließt Dropdown Menü und setzt eine bool auf True oder False
     def filter_menu_close(self, instance):
-        print(instance.text) # Bloß temporär zum Debuggen
+        if instance.text == "Filtered":
+            self.filtered = True
+            self.refresh_processes_list()
+        elif instance.text == "Everything":
+            self.filtered = False
+            self.refresh_processes_list()
         # MDDropdownMenu.dismiss() schließt das Dropdown Menü
         # https://kivymd.readthedocs.io/en/0.104.0/components/dropdown-item/index.html für mehr Info
         self.filter_menu.dismiss()
+
+
 
 # Führt Application Klasse aus
 # Klasse akzeptiert beim Aufruf keine Argumente und gibt eine neue Instanz ohne Features zurück,

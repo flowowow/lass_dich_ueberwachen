@@ -1,0 +1,91 @@
+# Die KV Sprache kann man sich etwas wie eine vereinfachte Kombination aus HTML, CSS und JS vorstellen,
+# die auf den grundliegenden Funktionen von Python aufbaut. 
+# Alles was hier passiert, könnte genau so gut in Python gemacht werden, ist aber manchmal umständlicher
+# und müllt auf lange Sicht den Code zu. Darum ist es sinnvoll alles Mögliche in eine .kv Datei zu packen, 
+# um den Code übersichtlich zu halten. Hier ein Beispiel zur Syntax:
+# 
+# Python Code:
+# TextInput (text = "Beispiel Text", padding = [10, 20, 30, 40], background_color = [1, 0, 0, 1], pos_hint = {"center_x": .5})
+#
+# KV Equivalent:
+# TextInput:
+#     text: "Beispiel Text"
+#     padding: 10, 20, 30, 40
+#     background_color: 1, 0, 0, 1
+#     pos_hint: {"center_x": .5}
+#
+# KivyMD ist dabei eine auf Kivy basierende und sowohl graphisch als auch funktional weiter ausgeschmückte Version einiger Kivy Objekte
+# Auf der Kivy Website https://kivy.org/doc/stable/guide/lang.html sind mehr Informationen über die Sprache
+# Auf der KivyMD Website https://kivymd.readthedocs.io/en/latest/ ist mehr zu KivyMD
+
+Screen:
+    # Layout zur Unterteilung in Reien und Spalten
+    # https://kivy.org/doc/stable/api-kivy.uix.boxlayout.html?highlight=boxlayout#module-kivy.uix.boxlayout für mehr Info
+    MDBoxLayout:
+        orientation: "vertical"
+        
+        # Toolbar --> das Ding oben am Rand
+        # https://kivymd.readthedocs.io/en/latest/components/toolbar/ für mehr Info
+        MDToolbar:
+            id: toolbar
+            title: "Processes"
+            elevation: 10
+            # Fast alle Objekte lassen sich auch mit einer Funktion verknüpfen, die bei einer bestimmten Aktion ausgeführt wird
+            right_action_items: [["dots-vertical", lambda x: app.filter_menu.open()]]
+
+            # MDSpinner:
+            #     active: False
+            #     size_hint: None, None
+            #     size: dp(35), dp(35)
+            #     pos_hint: {'center_x': 0, 'center_y': .5}
+            #     color: 1,1,1,1
+        
+        # BottomNavigation --> Das Ding unten am Rand
+        # https://kivymd.readthedocs.io/en/latest/components/bottom-navigation/ für mehr Info
+        MDBottomNavigation:
+            text_color_normal: 1, 1, 1, 1
+            text_color_active: 1, 0, 1, 1
+
+            # BN Subobjekt --> Objekt zu jedem einzelnen Tab, das den gesamten Inhalt hält
+            # und aufgerufen wird, wenn man auf den dementsprechenden Tab wechselt
+            # https://kivymd.readthedocs.io/en/latest/components/bottom-navigation/#kivymd.uix.bottomnavigation.MDBottomNavigationItem
+            MDBottomNavigationItem:
+                name: "selection"
+                text: "Selection"
+                icon: "checkbox-multiple-marked-outline"
+                
+                # Erlaubt Scroll Funktionalität
+                # https://kivy.org/doc/stable/api-kivy.uix.scrollview.html für mehr Info
+                # Basiert auf ScrollEffect https://kivy.org/doc/stable/api-kivy.effects.scroll.html#kivy.effects.scroll.ScrollEffect
+                ScrollView:
+                    do_scroll_x: False
+                    scroll_type: ["bars"]
+                    bar_width: 10
+                    bar_color: .7,.7,.7,1
+                    bar_inactive_color: .7,.7,.7,5
+
+                    # Beinhaltet alle Listen Objekte -> werden in diesem Fall im Python Skript per id hinzugefügt
+                    MDList:
+                        id: processes
+
+                # Einfach ein runder Knopf
+                # https://kivymd.readthedocs.io/en/latest/components/button/#mdfloatingactionbutton für mehr Info
+                MDFloatingActionButton:
+                    icon: "play"
+                    md_bg_color: app.theme_cls.primary_color
+                    elevation: 10
+                    on_press: app.activate_tracking(self)
+                    # Das ist hässlig, bitte ändern
+                    pos_hint: {"center_x": .9, "center_y": .1}
+
+            MDBottomNavigationItem:
+                name: "stats"
+                text: "Stats"
+                icon: "chart-line"
+                
+                # Einfacher Text
+                # https://kivymd.readthedocs.io/en/latest/components/label/ für mehr Info
+                MDLabel: 
+                    text: "Stats here"
+                    halign: "center"
+                    walign: "center"
